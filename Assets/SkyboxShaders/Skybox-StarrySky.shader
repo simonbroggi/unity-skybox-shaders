@@ -20,6 +20,9 @@ Properties {
 	_StarsSize ("Stars Size", Range(0,0.1)) = 0.009
 	_StarsDensity ("Stars Density", Range(0,1)) = 0.02
 	_StarsHash ("Stars Hash", Vector) = (641, -113, 271, 1117)
+
+	[Header(CameraTweak)]
+	_FovFactor("FOV Factor", Range(0.001, 4.0)) = 1.0
 }
 
 SubShader {
@@ -47,6 +50,8 @@ SubShader {
 		uniform half _StarsDensity;
 		uniform half _StarsSize;
 		uniform half4 _StarsHash;
+
+		uniform half _FovFactor;
 
 	#if defined(UNITY_COLORSPACE_GAMMA)
 		#define GAMMA 2
@@ -182,7 +187,13 @@ SubShader {
 		v2f vert (appdata_t v)
 		{
 			v2f OUT;
-			OUT.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+			//OUT.pos = UnityObjectToClipPos(v.vertex);
+
+			//vTrans = projection * modelview * incomingVertex;
+			float4x4 wideAngle = UNITY_MATRIX_P;
+			wideAngle[0,0] *= _FovFactor;
+			wideAngle[1,1] *= _FovFactor;
+			OUT.pos = mul(mul(wideAngle, UNITY_MATRIX_MV), v.vertex);
 
 			float3 kSkyTintInGammaSpace = COLOR_2_GAMMA(_SkyTint); // convert tint from Linear back to Gamma
 			float3 kScatteringWavelength = lerp (
